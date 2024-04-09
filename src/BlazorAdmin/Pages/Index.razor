@@ -1,0 +1,8 @@
+@page "/admin"
+@attribute [Authorize(Roles = BlazorShared.Authorization.Constants.Roles.ADMINISTRATORS)]
+@inherits BlazorAdmin.Helpers.BlazorComponent
+@namespace BlazorAdmin.Pages.CatalogItemPage
+
+<PageTitle>eShopOnWeb Admin: Dashboard</PageTitle>
+
+<h1>Admin Panel</h1>
