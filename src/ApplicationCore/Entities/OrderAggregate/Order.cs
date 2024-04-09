@@ -48,4 +48,11 @@ public class Order : BaseEntity, IAggregateRoot
         }
         return total;
     }
+
+    public void UpdateStatus(string status)
+    {
+        Guard.Against.NullOrEmpty(status, nameof(status));
+
+        Status = status;
+    }
 }

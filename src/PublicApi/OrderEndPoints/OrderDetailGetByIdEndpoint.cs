@@ -1,6 +1,5 @@
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -18,15 +17,6 @@ namespace Microsoft.eShopWeb.PublicApi.OrderEndPoints;
 /// </summary>
 public class OrderDetailGetByIdEndpoint : IEndpoint<IResult, GetByIdOrderDetailRequest, IRepository<Order>>
 {
-    private readonly IMapper _mapper;
-
-
-    public OrderDetailGetByIdEndpoint(IMapper mapper)
-    {
-        _mapper = mapper;
-
-    }
-
     public void AddRoute(IEndpointRouteBuilder app)
     {
         app.MapGet("api/orders/{orderNumber}",
@@ -49,7 +39,24 @@ public class OrderDetailGetByIdEndpoint : IEndpoint<IResult, GetByIdOrderDetailR
         if (order is null)
             return Results.NotFound();
 
-        response.OrderDetail = _mapper.Map<OrderDetailDto>(order);
+        response.OrderDetail = new OrderDetailDto
+        {
+            OrderDate = order.OrderDate,
+            OrderItems = order.OrderItems.Select(oi => new OrderItemDto
+            {
+                PictureUri = oi.ItemOrdered.PictureUri,
+                ProductId = oi.ItemOrdered.CatalogItemId,
+                ProductName = oi.ItemOrdered.ProductName,
+                UnitPrice = oi.UnitPrice,
+                Units = oi.Units
+            }).ToList(),
+            BuyerId = order.BuyerId,
+            OrderNumber = order.Id,
+            ShippingAddress = order.ShipToAddress,
+            Status = order.Status,
+            Total = order.Total()
+        };
+
         
         return Results.Ok(response);
     }
