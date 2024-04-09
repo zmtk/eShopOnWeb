@@ -1,0 +1,163 @@
+@inject ILogger<OrderDetails> Logger
+@inject IJSRuntime JSRuntime
+@inject IOrderManagementService OrderManagementService
+@using BlazorShared.Models.Order
+
+@inherits BlazorAdmin.Helpers.BlazorComponent
+
+@namespace BlazorAdmin.Pages.OrderManagementPage
+
+<div class="modal @_modalClass" tabindex="-1" role="dialog" style="display:@_modalDisplay">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Order Number #@_orderDetail.OrderNumber</h5> 
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 450px; overflow-y: auto;"> 
+            @if (_orderDetail == null)
+            {
+                <Spinner></Spinner>
+            }
+            else
+            {
+                <div class="container">
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <dt>
+                                BuyerId
+                            </dt>
+                            <dd>
+                                @_orderDetail.BuyerId
+                            </dd>
+                        </div>
+                        <div class="col-md-5">
+                            <dt>
+                                OrderDate
+                            </dt>
+                            <dd>
+                                @_orderDetail.OrderDate
+                            </dd>
+                        </div>
+                        <div class="col-md-2">
+                            <dt>
+                                Total
+                            </dt>
+                            <dd>
+                                @_orderDetail.Total
+                            </dd>
+                        </div>
+                        <div class="col-md-2">
+                            <dt>
+                                Status
+                            </dt>
+                            <dd>
+                                @_orderDetail.Status
+
+                            </dd>
+                        </div>
+                    </div>
+                        
+                    <div class="row">
+                        <div class="col">
+                            <dt>ShippingAddress</dt>
+                            <dd>
+                                <div class="row">
+                                    <div class="col">@_orderDetail.ShippingAddress?.Street</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">@_orderDetail.ShippingAddress?.City</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">@_orderDetail.ShippingAddress?.Country</div>
+                                </div>
+                            </dd>
+                        </div>
+                    </div>
+ 
+                    
+                    <div class="row">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Id</th>
+                                    <th>Name</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody class="cursor-pointer">
+                                @foreach (var item in _orderDetail.OrderItems)
+                                {
+                                    <tr>
+                                        <td>
+                                            <img class="img-thumbnail" src="@($"{item.PictureUri}")">
+                                        </td>
+                                        <td>@item.ProductId</td>
+                                        <td>@item.ProductName</td>
+                                        <td>@item.Units</td>
+                                        <td>@item.UnitPrice</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="Close">Close</button>
+                @if (_orderDetail.Status == "Pending") {
+                    <button class="btn btn-success" @onclick="ConfirmOrderClick">
+                        Confirm Order
+                     </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public EventCallback<int> OnConfirmOrderClick { get; set; }
+
+    private string _modalDisplay = "none;";
+    private string _modalClass = "";
+    private OrderDetail _orderDetail = new OrderDetail();
+    private bool orderPending => _orderDetail.Status != null && _orderDetail.Status.ToLower() == "pending";
+
+    public async Task ConfirmOrderClick()
+    {
+        await OnConfirmOrderClick.InvokeAsync(_orderDetail.OrderNumber);
+        await Close();
+    }
+
+    public async Task Open(int id)
+    {
+
+        Logger.LogInformation("Now loading... /Order/Details/{Id}", id);
+
+        await new Css(JSRuntime).HideBodyOverflow();
+
+        _orderDetail = await OrderManagementService.GetById(id);
+
+        _modalDisplay = "block;";
+        _modalClass = "Show";
+
+        StateHasChanged();
+    }
+
+    public async Task Close()
+    {
+        await new Css(JSRuntime).ShowBodyOverflow();
+
+        _modalDisplay = "none";
+        _modalClass = "";
+    }
+
+}
